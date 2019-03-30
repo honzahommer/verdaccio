@@ -12,7 +12,19 @@ import URL from 'url';
 import createError from 'http-errors';
 import marked from 'marked';
 
-import { HTTP_STATUS, API_ERROR, DEFAULT_PORT, DEFAULT_DOMAIN, DEFAULT_PROTOCOL, CHARACTER_ENCODING, HEADERS, DIST_TAGS, DEFAULT_USER } from './constants';
+import {
+  HTTP_STATUS,
+  API_ERROR,
+  DEFAULT_PORT,
+  DEFAULT_DOMAIN,
+  DEFAULT_PROTOCOL,
+  CHARACTER_ENCODING,
+  HEADERS,
+  DIST_TAGS,
+  DEFAULT_USER,
+  APP_ERROR,
+  MODULE_NOT_FOUND,
+} from './constants';
 import { generateGravatarUrl, GENERIC_AVATAR } from '../utils/user';
 
 import type { Package } from '@verdaccio/types';
@@ -383,12 +395,13 @@ export const ErrorCode = {
 export function parseConfigFile(configPath: string) {
   try {
     return YAML.safeLoad(fs.readFileSync(configPath, CHARACTER_ENCODING.UTF8));
-  } catch (e) {
+  } catch (err) {
     try {
       return require(configPath);
-    } catch (e) {
-      e.message = 'invalid config';
-      throw Error(e);
+    } catch (err) {
+      err.message = err.code === 'MODULE_NOT_FOUND' ? MODULE_NOT_FOUND : APP_ERROR.CONFIG_NOT_VALID;
+
+      throw err;
     }
   }
 }
