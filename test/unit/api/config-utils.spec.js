@@ -10,12 +10,15 @@ import {
   normalisePackageAccess, sanityCheckUplinksProps,
   uplinkSanityCheck
 } from '../../../src/lib/config-utils';
-import {PACKAGE_ACCESS, ROLES} from '../../../src/lib/constants';
+import {APP_ERROR, PACKAGE_ACCESS, ROLES, MODULE_NOT_FOUND} from '../../../src/lib/constants';
 
 describe('Config Utilities', () => {
 
-  const parseConfigurationFile = (name) => {
-    return path.join(__dirname, `../partials/config/yaml/${name}.yaml`);
+  const parseConfigurationFile = (conf) => {
+    const { name, ext } = path.parse(conf);
+    const format = ext.startsWith('.') ? ext.substring(1) : 'yaml';
+
+    return path.join(__dirname, `../partials/config/${format}/${name}.${format}`);
   };
 
   describe('uplinkSanityCheck', () => {
@@ -263,6 +266,46 @@ describe('Config Utilities', () => {
       const url: string = spliceURL('', '/-/static/logo.png');
 
       expect(url).toMatch('/-/static/logo.png');
+    });
+  });
+
+  describe('JSON', () => {
+    test('parse default.json', () => {
+      const config = parseConfigFile(parseConfigurationFile('default.json'));
+
+      expect(config.storage).toBeDefined();
+    });
+
+    test('parse invalid.json', () => {
+      expect(function ( ) {
+        parseConfigFile(parseConfigurationFile('invalid.json'));
+      }).toThrow(Error(APP_ERROR.CONFIG_NOT_VALID));
+    });
+
+    test('parse not-exists.json', () => {
+      expect(function ( ) {
+        parseConfigFile(parseConfigurationFile('not-exists.json'));
+      }).toThrow(Error(MODULE_NOT_FOUND));
+    });
+  });
+
+  describe('JavaScript', () => {
+    test('parse default.js', () => {
+      const config = parseConfigFile(parseConfigurationFile('default.js'));
+
+      expect(config.storage).toBeDefined();
+    });
+
+    test('parse invalid.js', () => {
+      expect(function ( ) {
+        parseConfigFile(parseConfigurationFile('invalid.js'));
+      }).toThrow(Error(APP_ERROR.CONFIG_NOT_VALID));
+    });
+
+    test('parse not-exists.js', () => {
+      expect(function ( ) {
+        parseConfigFile(parseConfigurationFile('not-exists.js'));
+      }).toThrow(Error(MODULE_NOT_FOUND));
     });
   });
 });
